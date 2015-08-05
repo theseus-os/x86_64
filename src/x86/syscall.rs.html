@@ -141,12 +141,14 @@
 <span id="99"> 99</span>
 <span id="100">100</span>
 <span id="101">101</span>
+<span id="102">102</span>
 </pre><pre class='rust '>
 <span class='doccomment'>/// SYSCALL invokes an OS system-call handler at privilege level 0.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// It does so by loading RIP from the IA32_LSTAR MSR (after saving the address of the instruction following SYSCALL into RCX).</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// &quot;A.2 AMD64 Linux Kernel Conventions&quot; of System V Application Binary Interface AMD64 Architecture Processor Supplement:</span>
+<span class='doccomment'>///</span>
 <span class='doccomment'>///  * The kernel interface uses %rdi, %rsi, %rdx, %r10, %r8 and %r9.</span>
 <span class='doccomment'>///  * A system-call is done via the syscall instruction. The kernel destroys registers %rcx and %r11.</span>
 <span class='doccomment'>///  * The number of the syscall has to be passed in register %rax.</span>
