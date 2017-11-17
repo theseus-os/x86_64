@@ -7,7 +7,7 @@
 
 #![feature(const_fn)]
 #![feature(asm)]
-#![feature(associated_consts)]
+// #![feature(associated_consts)]
 #![feature(abi_x86_interrupt)]
 #![cfg_attr(test, allow(unused_features))]
 
@@ -16,6 +16,7 @@
 pub use address::{VirtualAddress, PhysicalAddress};
 
 extern crate bit_field;
+extern crate irq_safety;
 
 #[macro_use]
 mod bitflags;

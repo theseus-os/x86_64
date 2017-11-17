@@ -11,10 +11,50 @@
 
 use core::fmt;
 use core::marker::PhantomData;
-use core::mem;
+// use core::mem;
 use core::ops::{Index, IndexMut};
 use bit_field::BitField;
 use {PrivilegeLevel, VirtualAddress};
+
+use irq_safety::{MutexIrqSafe, MutexIrqSafeGuard};
+
+
+/// A thread-safe wrapper around Idt that offers interior mutability
+/// that allows interrupt handlers to be added/changed/removed,
+/// but preserves safety by guaranteeing that the 
+pub struct LockedIdt {
+    idt: MutexIrqSafe<Idt>,
+}
+impl LockedIdt {
+    /// Creates a new LockedIDT filled with non-present entries.
+    pub const fn new() -> LockedIdt {
+        LockedIdt {
+            idt: MutexIrqSafe::new(Idt::new()),
+        }
+    }
+
+    /// Obtains the lock to the inner IDT and loads it in the CPU using the `lidt` command.
+    pub fn load(&'static self) {
+        self.idt.lock().load();
+    } 
+
+    /// Locks the spinlock and returns a guard.
+    /// Interrupts are also disabled until the guard falls out of scope,
+    /// at which point they are re-enabled iff they were previously enabled
+    /// when this function was invoked. 
+    ///
+    /// The returned value may be dereferenced for data access
+    /// and the lock will be dropped when the guard falls out of scope.
+    pub fn lock(&self) -> MutexIrqSafeGuard<Idt> {
+        self.idt.lock()
+    }
+}
+
+
+/// A default Idt, created as a const so it is always available
+/// in the .text section rather than as a variable in the .data section.
+pub const DEFAULT_IDT: Idt = Idt::new();
+
 
 /// An Interrupt Descriptor Table with 256 entries.
 ///
@@ -356,9 +396,12 @@ pub struct Idt {
 }
 
 impl Idt {
+    
     /// Creates a new IDT filled with non-present entries.
-    pub fn new() -> Idt {
-        debug_assert_eq!(mem::size_of::<Self>(), 256 * 16);
+    /// Hidden function because it should be called by the wrapper 
+    #[doc(hidden)]
+    const fn new() -> Idt {
+        // debug_assert_eq!(mem::size_of::<Self>(), 256 * 16);
         Idt {
             divide_by_zero: IdtEntry::missing(),
             debug: IdtEntry::missing(),
@@ -389,7 +432,13 @@ impl Idt {
     }
 
     /// Loads the IDT in the CPU using the `lidt` command.
-    pub fn load(&'static self) {
+    /// This used to require a static lifetime (&'static self) to ensure its safety,
+    /// but we ensure safety by making sure that it can only be invoked through the use of
+    /// LockedIdt above, which guarantees a static lifetime of the Mutex wrapping the Idt.
+    /// Thus, it offers the same safety guarantee as &'static self
+    #[doc(hidden)]
+    fn load(&self) {
+    // pub fn load(&'static self) {
         use instructions::tables::{DescriptorTablePointer, lidt};
         use core::mem::size_of;
 
@@ -401,6 +450,7 @@ impl Idt {
         unsafe { lidt(&ptr) };
     }
 }
+
 
 impl Index<usize> for Idt {
     type Output = IdtEntry<HandlerFunc>;
@@ -480,7 +530,7 @@ pub type PageFaultHandlerFunc = extern "x86-interrupt" fn(&mut ExceptionStackFra
 
 impl<F> IdtEntry<F> {
     /// Creates a non-present IDT entry (but sets the must-be-one bits).
-    fn missing() -> Self {
+    const fn missing() -> Self {
         IdtEntry {
             gdt_selector: 0,
             pointer_low: 0,
@@ -540,10 +590,13 @@ pub struct EntryOptions(u16);
 
 impl EntryOptions {
     /// Creates a minimal options field with all the must-be-one bits set.
-    fn minimal() -> Self {
-        let mut options = 0;
-        options.set_bits(9..12, 0b111); // 'must-be-one' bits
-        EntryOptions(options)
+    const fn minimal() -> Self {
+        // let mut options = 0;
+        // options.set_bits(9..12, 0b111); // 'must-be-one' bits
+        // EntryOptions(options)
+
+        // const-compatible version
+        EntryOptions(0b111 << 9)
     }
 
     /// Set or reset the preset bit.
