@@ -67,3 +67,12 @@ pub fn rdmsr(msr: u32) -> u64 {
     }
     ((high as u64) << 32) | (low as u64)
 }
+
+/// Read 64 bit PMC (performance monitor counter).
+pub fn rdpmc(msr: u32) -> u64 {
+    let (high, low): (u32, u32);
+    unsafe {
+        asm!("rdpmc": "={eax}" (low), "={edx}" (high): "{ecx}" (msr) : "memory" : "volatile");
+    }
+    ((high as u64) << 32) | (low as u64)
+}
