@@ -449,6 +449,17 @@ impl Idt {
 
         unsafe { lidt(&ptr) };
     }
+
+    /// Returns the first IDT entry that has the default_handler loaded, 
+    /// which signifies that the interrupt isn't being used by any device yet
+    pub fn find_free_entry(&self, default_handler: HandlerFunc) -> Result<u8, &'static str> {
+        // the maximum id for the IDT entries
+        let max_int_num = 255;
+        // we are iterating though the interrupt table in reverse because lower interrupts are more likely to be reserved
+        let int_num = self.interrupts.iter().rev().position(|&entry| entry.check_handler_equality(default_handler)).ok_or("find_free_entry: no interrupt available")?;
+        // return the actual index from the start of the table
+        Ok((max_int_num - int_num) as u8)
+    }
 }
 
 
@@ -561,7 +572,18 @@ impl<F> IdtEntry<F> {
         self.options.set_present(true);
         &mut self.options
     }
+
+    /// Checks if the interrupt handler stored for the IDT entry and the one passed as an argument are equal
+    /// Comparison is done on the low, middle and high address pointers of the handler
+    fn check_handler_addr(&self, addr: u64) -> bool {
+        let pointer_low = addr as u16;
+        let pointer_middle = (addr >> 16) as u16;
+        let pointer_high = (addr >> 32) as u32;
+
+        (self.pointer_low == pointer_low) && (self.pointer_middle == pointer_middle) && (self.pointer_high == pointer_high)
+    }
 }
+
 
 macro_rules! impl_set_handler_fn {
     ($h:ty) => {
@@ -575,6 +597,11 @@ macro_rules! impl_set_handler_fn {
             /// further customization.
             pub fn set_handler_fn(&mut self, handler: $h) -> &mut EntryOptions {
                 self.set_handler_addr(handler as u64)
+            }
+            
+            /// Checks if the interrupt handler stored for the IDT entry and the one passed as an argument are equal
+            pub fn check_handler_equality(&self, handler: $h) -> bool {
+                self.check_handler_addr(handler as u64)
             }
         }
     }
