@@ -450,15 +450,13 @@ impl Idt {
         unsafe { lidt(&ptr) };
     }
 
-    /// Returns the first IDT entry that has the default_handler loaded, 
+    /// Returns the last IDT entry that has the default_handler loaded, 
     /// which signifies that the interrupt isn't being used by any device yet
-    pub fn find_free_entry(&self, default_handler: HandlerFunc) -> Result<u8, &'static str> {
-        // the maximum id for the IDT entries
-        let max_int_num = 255;
+    pub fn find_free_entry(&self, default_handler: HandlerFunc) -> Option<usize> {
+        // offset in the IDT where user interrupts start 
+        let interrupt_offset = 32;
         // we are iterating though the interrupt table in reverse because lower interrupts are more likely to be reserved
-        let int_num = self.interrupts.iter().rev().position(|&entry| entry.check_handler_equality(default_handler)).ok_or("find_free_entry: no interrupt available")?;
-        // return the actual index from the start of the table
-        Ok((max_int_num - int_num) as u8)
+        self.interrupts.iter().rposition(|&entry| entry.check_handler_equality(default_handler)).map(|entry| entry + interrupt_offset)
     }
 }
 
@@ -573,7 +571,7 @@ impl<F> IdtEntry<F> {
         &mut self.options
     }
 
-    /// Checks if the interrupt handler stored for the IDT entry and the one passed as an argument are equal
+    /// Checks if the interrupt handler's address is equal to 'addr', the address of the given handler
     /// Comparison is done on the low, middle and high address pointers of the handler
     fn check_handler_addr(&self, addr: u64) -> bool {
         let pointer_low = addr as u16;
@@ -599,7 +597,7 @@ macro_rules! impl_set_handler_fn {
                 self.set_handler_addr(handler as u64)
             }
             
-            /// Checks if the interrupt handler stored for the IDT entry and the one passed as an argument are equal
+            /// Checks if the interrupt handler's function is quivalent to the given 'handler'
             pub fn check_handler_equality(&self, handler: $h) -> bool {
                 self.check_handler_addr(handler as u64)
             }
