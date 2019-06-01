@@ -449,6 +449,15 @@ impl Idt {
 
         unsafe { lidt(&ptr) };
     }
+
+    /// Returns the last IDT entry that has the default_handler loaded, 
+    /// which signifies that the interrupt isn't being used by any device yet
+    pub fn find_free_entry(&self, default_handler: HandlerFunc) -> Option<usize> {
+        // offset in the IDT where user interrupts start 
+        let interrupt_offset = 32;
+        // we are iterating though the interrupt table in reverse because lower interrupts are more likely to be reserved
+        self.interrupts.iter().rposition(|&entry| entry.handler_eq(default_handler)).map(|entry| entry + interrupt_offset)
+    }
 }
 
 
@@ -561,7 +570,17 @@ impl<F> IdtEntry<F> {
         self.options.set_present(true);
         &mut self.options
     }
+
+    /// Returns `true` if this interrupt handler's address is equal to the `address` of the given handler.
+    fn handler_addr_eq(&self, address: u64) -> bool {
+        let pointer_low = address as u16;
+        let pointer_middle = (address >> 16) as u16;
+        let pointer_high = (address >> 32) as u32;
+
+        (self.pointer_low == pointer_low) && (self.pointer_middle == pointer_middle) && (self.pointer_high == pointer_high)
+    }
 }
+
 
 macro_rules! impl_set_handler_fn {
     ($h:ty) => {
@@ -575,6 +594,11 @@ macro_rules! impl_set_handler_fn {
             /// further customization.
             pub fn set_handler_fn(&mut self, handler: $h) -> &mut EntryOptions {
                 self.set_handler_addr(handler as u64)
+            }
+            
+            /// Returns `true` if this interrupt handler's function is equivalent to the given 'handler'.
+            pub fn handler_eq(&self, handler: $h) -> bool {
+                self.handler_addr_eq(handler as u64)
             }
         }
     }
