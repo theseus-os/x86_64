@@ -456,7 +456,7 @@ impl Idt {
         // offset in the IDT where user interrupts start 
         let interrupt_offset = 32;
         // we are iterating though the interrupt table in reverse because lower interrupts are more likely to be reserved
-        self.interrupts.iter().rposition(|&entry| entry.check_handler_equality(default_handler)).map(|entry| entry + interrupt_offset)
+        self.interrupts.iter().rposition(|&entry| entry.handler_eq(default_handler)).map(|entry| entry + interrupt_offset)
     }
 }
 
@@ -571,12 +571,11 @@ impl<F> IdtEntry<F> {
         &mut self.options
     }
 
-    /// Checks if the interrupt handler's address is equal to 'addr', the address of the given handler
-    /// Comparison is done on the low, middle and high address pointers of the handler
-    fn check_handler_addr(&self, addr: u64) -> bool {
-        let pointer_low = addr as u16;
-        let pointer_middle = (addr >> 16) as u16;
-        let pointer_high = (addr >> 32) as u32;
+    /// Returns `true` if this interrupt handler's address is equal to the `address` of the given handler.
+    fn handler_addr_eq(&self, address: u64) -> bool {
+        let pointer_low = address as u16;
+        let pointer_middle = (address >> 16) as u16;
+        let pointer_high = (address >> 32) as u32;
 
         (self.pointer_low == pointer_low) && (self.pointer_middle == pointer_middle) && (self.pointer_high == pointer_high)
     }
@@ -597,9 +596,9 @@ macro_rules! impl_set_handler_fn {
                 self.set_handler_addr(handler as u64)
             }
             
-            /// Checks if the interrupt handler's function is quivalent to the given 'handler'
-            pub fn check_handler_equality(&self, handler: $h) -> bool {
-                self.check_handler_addr(handler as u64)
+            /// Returns `true` if this interrupt handler's function is equivalent to the given 'handler'.
+            pub fn handler_eq(&self, handler: $h) -> bool {
+                self.handler_addr_eq(handler as u64)
             }
         }
     }
