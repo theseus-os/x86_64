@@ -572,7 +572,7 @@ impl<F> IdtEntry<F> {
     }
 
     /// Returns `true` if this interrupt handler's address is equal to the `address` of the given handler.
-    fn handler_addr_eq(&self, address: u64) -> bool {
+    pub fn handler_addr_eq(&self, address: u64) -> bool {
         let pointer_low = address as u16;
         let pointer_middle = (address >> 16) as u16;
         let pointer_high = (address >> 32) as u32;
