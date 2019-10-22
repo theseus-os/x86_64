@@ -12,14 +12,13 @@
 #![cfg_attr(test, allow(unused_features))]
 
 #![no_std]
+#![allow(safe_packed_borrows)]
 
 pub use address::{VirtualAddress, PhysicalAddress};
 
 extern crate bit_field;
 extern crate irq_safety;
-
-#[macro_use]
-mod bitflags;
+#[macro_use] extern crate bitflags;
 
 pub mod instructions;
 pub mod registers;

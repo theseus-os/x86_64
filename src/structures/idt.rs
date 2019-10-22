@@ -478,9 +478,9 @@ impl Index<usize> for Idt {
             18 => &self.machine_check,
             19 => &self.simd_floating_point,
             20 => &self.virtualization,
-            i @ 32...255 => &self.interrupts[i - 32],
-            i @ 15 | i @ 31 | i @ 21...29 => panic!("entry {} is reserved", i),
-            i @ 8 | i @ 10...14 | i @ 17 | i @ 30 => {
+            i @ 32..=255 => &self.interrupts[i - 32],
+            i @ 15 | i @ 31 | i @ 21..=29 => panic!("entry {} is reserved", i),
+            i @ 8 | i @ 10..=14 | i @ 17 | i @ 30 => {
                 panic!("entry {} is an exception with error code", i)
             }
             i => panic!("no entry with index {}", i),
@@ -504,9 +504,9 @@ impl IndexMut<usize> for Idt {
             18 => &mut self.machine_check,
             19 => &mut self.simd_floating_point,
             20 => &mut self.virtualization,
-            i @ 32...255 => &mut self.interrupts[i - 32],
-            i @ 15 | i @ 31 | i @ 21...29 => panic!("entry {} is reserved", i),
-            i @ 8 | i @ 10...14 | i @ 17 | i @ 30 => {
+            i @ 32..=255 => &mut self.interrupts[i - 32],
+            i @ 15 | i @ 31 | i @ 21..=29 => panic!("entry {} is reserved", i),
+            i @ 8 | i @ 10..=14 | i @ 17 | i @ 30 => {
                 panic!("entry {} is an exception with error code", i)
             }
             i => panic!("no entry with index {}", i),
@@ -518,7 +518,7 @@ impl IndexMut<usize> for Idt {
 ///
 /// The generic parameter can either be `HandlerFunc` or `HandlerFuncWithErrCode`, depending
 /// on the interrupt vector.
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 #[repr(C, packed)]
 pub struct IdtEntry<F> {
     pointer_low: u16,
@@ -529,6 +529,14 @@ pub struct IdtEntry<F> {
     reserved: u32,
     phantom: PhantomData<F>,
 }
+impl<F> fmt::Debug for IdtEntry<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "IdtEntry{{gdt_selector: {:#X}, pointer: {:#X}, {:?}}}", 
+            self.gdt_selector, self.handler_address(), self.options
+        )
+    }
+}
+
 
 /// A handler function for an interrupt or an exception without error code.
 pub type HandlerFunc = extern "x86-interrupt" fn(&mut ExceptionStackFrame);
@@ -561,11 +569,12 @@ impl<F> IdtEntry<F> {
     fn set_handler_addr(&mut self, addr: u64) -> &mut EntryOptions {
         use instructions::segmentation;
 
-        self.pointer_low = addr as u16;
-        self.pointer_middle = (addr >> 16) as u16;
-        self.pointer_high = (addr >> 32) as u32;
-
         self.gdt_selector = segmentation::cs().0;
+
+        let (low, mid, high) = address_to_parts(addr);
+        self.pointer_low    = low;
+        self.pointer_middle = mid;
+        self.pointer_high   = high;
 
         self.options.set_present(true);
         &mut self.options
@@ -573,13 +582,26 @@ impl<F> IdtEntry<F> {
 
     /// Returns `true` if this interrupt handler's address is equal to the `address` of the given handler.
     pub fn handler_addr_eq(&self, address: u64) -> bool {
-        let pointer_low = address as u16;
-        let pointer_middle = (address >> 16) as u16;
-        let pointer_high = (address >> 32) as u32;
-
+        let (pointer_low, pointer_middle, pointer_high) = address_to_parts(address);
         (self.pointer_low == pointer_low) && (self.pointer_middle == pointer_middle) && (self.pointer_high == pointer_high)
     }
+
+    /// Returns the address of the interrupt handler function in this `IdtEntry`.
+    pub fn handler_address(&self) -> u64 {
+        self.pointer_low as u64
+            | ((self.pointer_middle as u64) << 16)
+            | ((self.pointer_high as u64) << 32)
+    }
 }
+
+/// Splits the given address into the three parts required for an IdtEntry:
+/// a tuple of the low 16 bits, the middle 16 bits, and the high 32 bits.
+fn address_to_parts(address: u64) -> (u16, u16, u32) {
+    let low = address as u16;
+    let middle = (address >> 16) as u16;
+    let high = (address >> 32) as u32;
+    (low, middle, high)
+} 
 
 
 macro_rules! impl_set_handler_fn {
@@ -705,27 +727,27 @@ impl fmt::Debug for ExceptionStackFrame {
 
 bitflags! {
     /// Describes an page fault error code.
-    pub flags PageFaultErrorCode: u64 {
+    pub struct PageFaultErrorCode: u64 {
         /// If this flag is set, the page fault was caused by a page-protection violation,
         /// else the page fault was caused by a not-present page.
-        const PROTECTION_VIOLATION = 1 << 0,
+        const PROTECTION_VIOLATION = 1 << 0;
 
         /// If this flag is set, the memory access that caused the page fault was a write.
         /// Else the access that caused the page fault is a memory read. This bit does not
         /// necessarily indicate the cause of the page fault was a read or write violation.
-        const CAUSED_BY_WRITE = 1 << 1,
+        const CAUSED_BY_WRITE = 1 << 1;
 
         /// If this flag is set, an access in user mode (CPL=3) caused the page fault. Else
         /// an access in supervisor mode (CPL=0, 1, or 2) caused the page fault. This bit
         /// does not necessarily indicate the cause of the page fault was a privilege violation.
-        const USER_MODE = 1 << 2,
+        const USER_MODE = 1 << 2;
 
         /// If this flag is set, the page fault is a result of the processor reading a 1 from
         /// a reserved field within a page-translation-table entry.
-        const MALFORMED_TABLE = 1 << 3,
+        const MALFORMED_TABLE = 1 << 3;
 
         /// If this flag is set, it indicates that the access that caused the page fault was an
         /// instruction fetch.
-        const INSTRUCTION_FETCH = 1 << 4,
+        const INSTRUCTION_FETCH = 1 << 4;
     }
 }

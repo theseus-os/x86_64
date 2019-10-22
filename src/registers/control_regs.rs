@@ -7,42 +7,42 @@ use {VirtualAddress, PhysicalAddress};
 
 bitflags! {
     /// Provides operating-mode controls and some processor-feature controls.
-    pub flags Cr0: usize {
-        const ENABLE_PAGING = 1 << 31,
-        const CACHE_DISABLE = 1 << 30,
-        const NOT_WRITE_THROUGH = 1 << 29,
-        const ALIGNMENT_MASK = 1 << 18,
-        const WRITE_PROTECT = 1 << 16,
-        const NUMERIC_ERROR = 1 << 5,
-        const EXTENSION_TYPE = 1 << 4,
-        const TASK_SWITCHED = 1 << 3,
-        const EMULATE_COPROCESSOR = 1 << 2,
-        const MONITOR_COPROCESSOR = 1 << 1,
-        const PROTECTED_MODE = 1 << 0,
+    pub struct Cr0: usize {
+        const ENABLE_PAGING = 1 << 31;
+        const CACHE_DISABLE = 1 << 30;
+        const NOT_WRITE_THROUGH = 1 << 29;
+        const ALIGNMENT_MASK = 1 << 18;
+        const WRITE_PROTECT = 1 << 16;
+        const NUMERIC_ERROR = 1 << 5;
+        const EXTENSION_TYPE = 1 << 4;
+        const TASK_SWITCHED = 1 << 3;
+        const EMULATE_COPROCESSOR = 1 << 2;
+        const MONITOR_COPROCESSOR = 1 << 1;
+        const PROTECTED_MODE = 1 << 0;
     }
 }
 
 bitflags! {
     /// This register contains additional controls for various operating-mode features.
     #[allow(missing_docs)]
-    pub flags Cr4: usize {
-        const ENABLE_SMAP = 1 << 21,
-        const ENABLE_SMEP = 1 << 20,
-        const ENABLE_OS_XSAVE = 1 << 18,
-        const ENABLE_PCID = 1 << 17,
-        const ENABLE_SMX = 1 << 14,
-        const ENABLE_VMX = 1 << 13,
-        const UNMASKED_SSE = 1 << 10,
-        const ENABLE_SSE = 1 << 9,
-        const ENABLE_PPMC = 1 << 8,
-        const ENABLE_GLOBAL_PAGES = 1 << 7,
-        const ENABLE_MACHINE_CHECK = 1 << 6,
-        const ENABLE_PAE = 1 << 5,
-        const ENABLE_PSE = 1 << 4,
-        const DEBUGGING_EXTENSIONS = 1 << 3,
-        const TIME_STAMP_DISABLE = 1 << 2,
-        const VIRTUAL_INTERRUPTS = 1 << 1,
-        const ENABLE_VME = 1 << 0,
+    pub struct Cr4: usize {
+        const ENABLE_SMAP = 1 << 21;
+        const ENABLE_SMEP = 1 << 20;
+        const ENABLE_OS_XSAVE = 1 << 18;
+        const ENABLE_PCID = 1 << 17;
+        const ENABLE_SMX = 1 << 14;
+        const ENABLE_VMX = 1 << 13;
+        const UNMASKED_SSE = 1 << 10;
+        const ENABLE_SSE = 1 << 9;
+        const ENABLE_PPMC = 1 << 8;
+        const ENABLE_GLOBAL_PAGES = 1 << 7;
+        const ENABLE_MACHINE_CHECK = 1 << 6;
+        const ENABLE_PAE = 1 << 5;
+        const ENABLE_PSE = 1 << 4;
+        const DEBUGGING_EXTENSIONS = 1 << 3;
+        const TIME_STAMP_DISABLE = 1 << 2;
+        const VIRTUAL_INTERRUPTS = 1 << 1;
+        const ENABLE_VME = 1 << 0;
     }
 }
 
