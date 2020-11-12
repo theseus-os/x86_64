@@ -49,7 +49,7 @@ bitflags! {
 /// Read CR0
 pub fn cr0() -> Cr0 {
     let ret: usize;
-    unsafe { asm!("mov %cr0, $0" : "=r" (ret)) };
+    unsafe { llvm_asm!("mov %cr0, $0" : "=r" (ret)) };
     Cr0::from_bits_truncate(ret)
 }
 
@@ -58,7 +58,7 @@ pub fn cr0() -> Cr0 {
 /// # Safety
 /// Changing the CR0 register is unsafe, because e.g. disabling paging would violate memory safety.
 pub unsafe fn cr0_write(val: Cr0) {
-    asm!("mov $0, %cr0" :: "r" (val.bits()) : "memory");
+    llvm_asm!("mov $0, %cr0" :: "r" (val.bits()) : "memory");
 }
 
 /// Update CR0.
@@ -76,14 +76,14 @@ pub unsafe fn cr0_update<F>(f: F)
 /// Contains page-fault virtual address.
 pub fn cr2() -> VirtualAddress {
     let ret: usize;
-    unsafe { asm!("mov %cr2, $0" : "=r" (ret)) };
+    unsafe { llvm_asm!("mov %cr2, $0" : "=r" (ret)) };
     VirtualAddress(ret)
 }
 
 /// Contains page-table root pointer.
 pub fn cr3() -> PhysicalAddress {
     let ret: u64;
-    unsafe { asm!("mov %cr3, $0" : "=r" (ret)) };
+    unsafe { llvm_asm!("mov %cr3, $0" : "=r" (ret)) };
     PhysicalAddress(ret)
 }
 
@@ -93,13 +93,13 @@ pub fn cr3() -> PhysicalAddress {
 /// Changing the level 4 page table is unsafe, because it's possible to violate memory safety by
 /// changing the page mapping.
 pub unsafe fn cr3_write(val: PhysicalAddress) {
-    asm!("mov $0, %cr3" :: "r" (val.0) : "memory");
+    llvm_asm!("mov $0, %cr3" :: "r" (val.0) : "memory");
 }
 
 /// Contains various flags to control operations in protected mode.
 pub fn cr4() -> Cr4 {
     let ret: usize;
-    unsafe { asm!("mov %cr4, $0" : "=r" (ret)) };
+    unsafe { llvm_asm!("mov %cr4, $0" : "=r" (ret)) };
     Cr4::from_bits_truncate(ret)
 }
 
@@ -108,5 +108,5 @@ pub fn cr4() -> Cr4 {
 /// # Safety
 /// It's not clear if it's always memory safe to change the CR4 register.
 pub unsafe fn cr4_write(val: Cr4) {
-    asm!("mov $0, %cr4" :: "r" (val.bits) : "memory");
+    llvm_asm!("mov $0, %cr4" :: "r" (val.bits) : "memory");
 }

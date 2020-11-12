@@ -52,11 +52,11 @@ bitflags! {
 /// Returns the current value of the RFLAGS register.
 pub fn flags() -> Flags {
     let r: usize;
-    unsafe { asm!("pushfq; popq $0" : "=r"(r) :: "memory") };
+    unsafe { llvm_asm!("pushfq; popq $0" : "=r"(r) :: "memory") };
     Flags::from_bits_truncate(r)
 }
 
 /// Writes the RFLAGS register.
 pub fn set_flags(val: Flags) {
-    unsafe { asm!("pushq $0; popfq" :: "r"(val.bits()) : "memory" "flags") };
+    unsafe { llvm_asm!("pushq $0; popfq" :: "r"(val.bits()) : "memory" "flags") };
 }

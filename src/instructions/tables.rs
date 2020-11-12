@@ -15,20 +15,20 @@ pub struct DescriptorTablePointer {
 
 /// Load GDT table.
 pub unsafe fn lgdt(gdt: &DescriptorTablePointer) {
-    asm!("lgdt ($0)" :: "r" (gdt) : "memory");
+    llvm_asm!("lgdt ($0)" :: "r" (gdt) : "memory");
 }
 
 /// Load LDT table.
 pub unsafe fn lldt(ldt: &DescriptorTablePointer) {
-    asm!("lldt ($0)" :: "r" (ldt) : "memory");
+    llvm_asm!("lldt ($0)" :: "r" (ldt) : "memory");
 }
 
 /// Load IDT table.
 pub unsafe fn lidt(idt: &DescriptorTablePointer) {
-    asm!("lidt ($0)" :: "r" (idt) : "memory");
+    llvm_asm!("lidt ($0)" :: "r" (idt) : "memory");
 }
 
 /// Load the task state register using the `ltr` instruction.
 pub unsafe fn load_tss(sel: SegmentSelector) {
-    asm!("ltr $0" :: "r" (sel.0));
+    llvm_asm!("ltr $0" :: "r" (sel.0));
 }

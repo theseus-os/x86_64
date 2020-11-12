@@ -9,7 +9,7 @@ pub mod segmentation;
 /// Halts the CPU by executing the `hlt` instruction.
 #[inline(always)]
 pub unsafe fn halt() {
-    asm!("hlt" :::: "volatile");
+    llvm_asm!("hlt" :::: "volatile");
 }
 
 /// Read time stamp counters
@@ -27,7 +27,7 @@ pub fn rdtsc() -> u64 {
     let low: u32;
     let high: u32;
     unsafe {
-        asm!("rdtsc" : "={eax}" (low), "={edx}" (high));
+        llvm_asm!("rdtsc" : "={eax}" (low), "={edx}" (high));
     }
     ((u64::from(high)) << 32) | (u64::from(low))
 }
@@ -45,7 +45,7 @@ pub fn rdtscp() -> u64 {
     let low: u32;
     let high: u32;
     unsafe {
-        asm!("rdtscp" : "={eax}" (low), "={edx}" (high) ::: "volatile");
+        llvm_asm!("rdtscp" : "={eax}" (low), "={edx}" (high) ::: "volatile");
     }
     ((high as u64) << 32) | (low as u64)
 }
@@ -56,14 +56,14 @@ pub fn rdtscp() -> u64 {
 pub unsafe fn wrmsr(msr: u32, value: u64) {
     let low = value as u32;
     let high = (value >> 32) as u32;
-    asm!("wrmsr" :: "{ecx}" (msr), "{eax}" (low), "{edx}" (high) : "memory" : "volatile" );
+    llvm_asm!("wrmsr" :: "{ecx}" (msr), "{eax}" (low), "{edx}" (high) : "memory" : "volatile" );
 }
 
 /// Read 64 bits msr register.
 pub fn rdmsr(msr: u32) -> u64 {
     let (high, low): (u32, u32);
     unsafe {
-        asm!("rdmsr" : "={eax}" (low), "={edx}" (high) : "{ecx}" (msr) : "memory" : "volatile");
+        llvm_asm!("rdmsr" : "={eax}" (low), "={edx}" (high) : "{ecx}" (msr) : "memory" : "volatile");
     }
     ((high as u64) << 32) | (low as u64)
 }
@@ -72,7 +72,7 @@ pub fn rdmsr(msr: u32) -> u64 {
 pub fn rdpmc(msr: u32) -> u64 {
     let (high, low): (u32, u32);
     unsafe {
-        asm!("rdpmc": "={eax}" (low), "={edx}" (high): "{ecx}" (msr) : "memory" : "volatile");
+        llvm_asm!("rdpmc": "={eax}" (low), "={edx}" (high): "{ecx}" (msr) : "memory" : "volatile");
     }
     ((high as u64) << 32) | (low as u64)
 }

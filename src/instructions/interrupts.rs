@@ -2,12 +2,12 @@
 
 /// Enable hardware interrupts using the `sti` instruction.
 pub unsafe fn enable() {
-    asm!("sti");
+    llvm_asm!("sti");
 }
 
 /// Disable hardware interrupts using the `cli` instruction.
 pub unsafe fn disable() {
-    asm!("cli");
+    llvm_asm!("cli");
 }
 
 /// Generate a software interrupt.
@@ -16,7 +16,7 @@ pub unsafe fn disable() {
 macro_rules! int {
     ( $x:expr ) => {
         {
-            asm!("int $0" :: "N" ($x));
+            llvm_asm!("int $0" :: "N" ($x));
         }
     };
 }
@@ -24,6 +24,6 @@ macro_rules! int {
 /// Cause a breakpoint exception by invoking the `int3` instruction.
 pub fn int3() {
     unsafe {
-        asm!("int3");
+        llvm_asm!("int3");
     }
 }
