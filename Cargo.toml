@@ -25,5 +25,5 @@ harness = false
 
 [dependencies]
 bit_field = "0.7.0"
-irq_safety = { git = "https://github.com/kevinaboos/irq_safety" }
+irq_safety = { git = "https://github.com/theseus-os/irq_safety" }
 bitflags = "1.1.0"
