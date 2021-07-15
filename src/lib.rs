@@ -11,7 +11,7 @@
 #![cfg_attr(test, allow(unused_features))]
 
 #![no_std]
-#![allow(safe_packed_borrows)]
+#![allow(unaligned_references)]
 
 pub use address::{VirtualAddress, PhysicalAddress};
 
