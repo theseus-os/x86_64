@@ -1,5 +1,7 @@
 //! Processor state stored in the FLAGS, EFLAGS, or RFLAGS register.
 
+use core::arch::asm;
+
 bitflags! {
     /// The RFLAGS register. All variants are backwards compatable so only one
     /// bitflags struct needed.
@@ -52,11 +54,11 @@ bitflags! {
 /// Returns the current value of the RFLAGS register.
 pub fn flags() -> Flags {
     let r: usize;
-    unsafe { llvm_asm!("pushfq; popq $0" : "=r"(r) :: "memory") };
+    unsafe { asm!("pushfq; pop {}", out(reg) r, options(nomem, preserves_flags)); }
     Flags::from_bits_truncate(r)
 }
 
 /// Writes the RFLAGS register.
 pub fn set_flags(val: Flags) {
-    unsafe { llvm_asm!("pushq $0; popfq" :: "r"(val.bits()) : "memory" "flags") };
+    unsafe { asm!("push {}; popfq", in(reg) val.bits(), options(nomem, preserves_flags)); }
 }

@@ -1,13 +1,14 @@
 //! Enable and disable hardware interrupts.
+use core::arch::asm;
 
 /// Enable hardware interrupts using the `sti` instruction.
 pub unsafe fn enable() {
-    llvm_asm!("sti");
+    asm!("sti", options(nomem, nostack));
 }
 
 /// Disable hardware interrupts using the `cli` instruction.
 pub unsafe fn disable() {
-    llvm_asm!("cli");
+    asm!("cli", options(nomem, nostack));
 }
 
 /// Generate a software interrupt.
@@ -16,7 +17,7 @@ pub unsafe fn disable() {
 macro_rules! int {
     ( $x:expr ) => {
         {
-            llvm_asm!("int $0" :: "N" ($x));
+            asm!("int {id}", id = const $x, options(nomem, nostack));
         }
     };
 }
@@ -24,6 +25,6 @@ macro_rules! int {
 /// Cause a breakpoint exception by invoking the `int3` instruction.
 pub fn int3() {
     unsafe {
-        llvm_asm!("int3");
+        asm!("int3", options(nomem, nostack));
     }
 }

@@ -4,6 +4,7 @@
 #![allow(missing_docs)]
 
 use {VirtualAddress, PhysicalAddress};
+use core::arch::asm;
 
 bitflags! {
     /// Provides operating-mode controls and some processor-feature controls.
@@ -49,7 +50,7 @@ bitflags! {
 /// Read CR0
 pub fn cr0() -> Cr0 {
     let ret: usize;
-    unsafe { llvm_asm!("mov %cr0, $0" : "=r" (ret)) };
+    unsafe { asm!("mov {}, cr0", out(reg) ret, options(nomem, nostack, preserves_flags)); }
     Cr0::from_bits_truncate(ret)
 }
 
@@ -58,7 +59,7 @@ pub fn cr0() -> Cr0 {
 /// # Safety
 /// Changing the CR0 register is unsafe, because e.g. disabling paging would violate memory safety.
 pub unsafe fn cr0_write(val: Cr0) {
-    llvm_asm!("mov $0, %cr0" :: "r" (val.bits()) : "memory");
+    asm!("mov cr0, {}", in(reg) val.bits(), options(nostack, preserves_flags));
 }
 
 /// Update CR0.
@@ -76,14 +77,14 @@ pub unsafe fn cr0_update<F>(f: F)
 /// Contains page-fault virtual address.
 pub fn cr2() -> VirtualAddress {
     let ret: usize;
-    unsafe { llvm_asm!("mov %cr2, $0" : "=r" (ret)) };
+    unsafe { asm!("mov {}, cr2", out(reg) ret, options(nomem, nostack, preserves_flags)); }
     VirtualAddress(ret)
 }
 
 /// Contains page-table root pointer.
 pub fn cr3() -> PhysicalAddress {
     let ret: u64;
-    unsafe { llvm_asm!("mov %cr3, $0" : "=r" (ret)) };
+    unsafe { asm!("mov {}, cr3", out(reg) ret, options(nomem, nostack, preserves_flags)); }
     PhysicalAddress(ret)
 }
 
@@ -93,13 +94,13 @@ pub fn cr3() -> PhysicalAddress {
 /// Changing the level 4 page table is unsafe, because it's possible to violate memory safety by
 /// changing the page mapping.
 pub unsafe fn cr3_write(val: PhysicalAddress) {
-    llvm_asm!("mov $0, %cr3" :: "r" (val.0) : "memory");
+    asm!("mov cr3, {}", in(reg) val.0, options(nostack, preserves_flags));
 }
 
 /// Contains various flags to control operations in protected mode.
 pub fn cr4() -> Cr4 {
     let ret: usize;
-    unsafe { llvm_asm!("mov %cr4, $0" : "=r" (ret)) };
+    unsafe { asm!("mov {}, cr4", out(reg) ret, options(nomem, nostack, preserves_flags)); }
     Cr4::from_bits_truncate(ret)
 }
 
@@ -108,5 +109,5 @@ pub fn cr4() -> Cr4 {
 /// # Safety
 /// It's not clear if it's always memory safe to change the CR4 register.
 pub unsafe fn cr4_write(val: Cr4) {
-    llvm_asm!("mov $0, %cr4" :: "r" (val.bits) : "memory");
+    asm!("mov cr4, {}", in(reg) val.bits(), options(nostack, preserves_flags));
 }

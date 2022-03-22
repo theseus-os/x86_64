@@ -5,8 +5,7 @@
 
 #![warn(missing_docs)]
 
-#![feature(llvm_asm)]
-#![feature(const_fn_fn_ptr_basics, const_mut_refs)]
+#![feature(const_mut_refs)]
 #![feature(abi_x86_interrupt)]
 #![cfg_attr(test, allow(unused_features))]
 
