@@ -1,57 +1,53 @@
-//! Low level functions for special x86 instructions.
+#![cfg(feature = "instructions")]
 
-pub mod port;
+//! Special x86_64 instructions.
+
 pub mod interrupts;
+pub mod port;
+pub mod random;
+pub mod segmentation;
 pub mod tables;
 pub mod tlb;
-pub mod segmentation;
 
 use core::arch::asm;
 
-/// Halts the CPU by executing the `hlt` instruction.
+/// Halts the CPU until the next interrupt arrives.
+#[inline]
+pub fn hlt() {
+    unsafe {
+        asm!("hlt", options(nomem, nostack, preserves_flags));
+    }
+}
+
+/// Executes the `nop` instructions, which performs no operation (i.e. does nothing).
+///
+/// This operation is useful to work around the LLVM bug that endless loops are illegally
+/// optimized away (see [the issue](https://github.com/rust-lang/rust/issues/28728)). By invoking this
+/// instruction (which is marked as volatile), the compiler should no longer optimize the
+/// endless loop away.
+#[inline]
+pub fn nop() {
+    unsafe {
+        asm!("nop", options(nomem, nostack, preserves_flags));
+    }
+}
+
+/// Emits a '[magic breakpoint](https://wiki.osdev.org/Bochs#Magic_Breakpoint)' instruction for the [Bochs](http://bochs.sourceforge.net/) CPU
+/// emulator. Make sure to set `magic_break: enabled=1` in your `.bochsrc` file.
+#[inline]
+pub fn bochs_breakpoint() {
+    unsafe {
+        asm!("xchg bx, bx", options(nomem, nostack, preserves_flags));
+    }
+}
+
+/// Gets the current instruction pointer. Note that this is only approximate as it requires a few
+/// instructions to execute.
 #[inline(always)]
-pub unsafe fn halt() {
-    asm!("hlt", options(nomem, nostack, preserves_flags));
-}
-
-// Model specific registers
-
-/// Write 64 bits to msr register.
-pub unsafe fn wrmsr(msr: u32, value: u64) {
-    let low = value as u32;
-    let high = (value >> 32) as u32;
-    asm!(
-        "wrmsr",
-        in("ecx") msr,
-        in("eax") low, in("edx") high,
-        options(nostack, preserves_flags),
-    );
-}
-
-/// Read 64 bits msr register.
-pub fn rdmsr(msr: u32) -> u64 {
-    let (high, low): (u32, u32);
+pub fn read_rip() -> crate::VirtAddr {
+    let rip: u64;
     unsafe {
-        asm!(
-            "rdmsr",
-            in("ecx") msr,
-            out("eax") low, out("edx") high,
-            options(nomem, nostack, preserves_flags),
-        );
+        asm!("lea {}, [rip]", out(reg) rip, options(nostack, nomem, preserves_flags));
     }
-    ((high as u64) << 32) | (low as u64)
-}
-
-/// Read 64 bit PMC (performance monitor counter).
-pub fn rdpmc(msr: u32) -> u64 {
-    let (high, low): (u32, u32);
-    unsafe {
-        asm!(
-            "rdpmc",
-            in("ecx") msr,
-            out("eax") low, out("edx") high,
-            options(nomem, nostack, preserves_flags),
-        );
-    }
-    ((high as u64) << 32) | (low as u64)
+    crate::VirtAddr::new(rip)
 }

@@ -1,17 +1,17 @@
 # x86_64 library
 
-[![docs.rs](https://img.shields.io/badge/docs.rs-documentation-green.svg)](https://docs.rs/x86_64)
+[![Crates.io](https://img.shields.io/crates/v/x86_64)](https://crates.io/crates/x86_64)
+[![Build Status](https://github.com/rust-osdev/x86_64/workflows/Build/badge.svg)](https://github.com/rust-osdev/x86_64/actions?query=workflow%3ABuild) [![docs.rs](https://img.shields.io/badge/docs.rs-documentation-green.svg)](https://docs.rs/x86_64)
 
-Fork of [gz/rust-x86](https://github.com/gz/rust-x86).
+Support for x86_64 specific instructions (e.g. TLB flush), registers (e.g. control registers), and structures (e.g. page tables).
 
-Library to program x86_64 hardware. Contains x86_64 specific data structure descriptions, data-tables, as well as convenience function to call assembly instructions typically not exposed in higher level languages.
+## Crate Feature Flags
 
-Currently supports
-  * I/O registers
-  * Control registers
-  * MSR registers
-  * Interrupts
-  * Task state
-  * Querying CPUID (uses [raw_cpuid](https://github.com/gz/rust-cpuid) library)
+* `nightly`: Enables features only available on nightly Rust; enabled by default.
+* `instructions`: Enabled by default, turns on x86\_64 specific instructions, and dependent features. Only available for x86\_64 targets.
+* `external_asm`: Use this to build with non-nightly rust. Needs `default-features = false, features = ["instructions"]`. Is unsupported on Windows.
 
-This library depends on libcore so it can be used in kernel level code.
+## Building with stable rust
+
+This needs to have the [compile-time requirements](https://github.com/alexcrichton/cc-rs#compile-time-requirements) of the `cc` crate installed on your system.
+It was currently only tested on Linux and MacOS.

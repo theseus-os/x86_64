@@ -1,29 +1,55 @@
 [package]
-
-name = "x86_64"
-version = "0.1.2"
 authors = [
-  "Gerd Zellweger <mail@gerdzellweger.com>",
-  "Eric Kidd <git@randomhacks.net>",
-  "Philipp Oppermann <dev@phil-opp.com>",
-  "Dan Schatzberg <schatzberg.dan@gmail.com>",
-  "John Ericson <John_Ericson@Yahoo.com>",
-  "Rex Lunae <rexlunae@gmail.com>"
+    "Gerd Zellweger <mail@gerdzellweger.com>",
+    "Eric Kidd <git@randomhacks.net>",
+    "Philipp Oppermann <dev@phil-opp.com>",
+    "Dan Schatzberg <schatzberg.dan@gmail.com>",
+    "John Ericson <John_Ericson@Yahoo.com>",
+    "Rex Lunae <rexlunae@gmail.com>",
 ]
-
-description = "Provides x86_64 specific functions and data structures, and access to various system registers."
-
-repository = "https://github.com/phil-opp/x86_64"
+description = "Support for x86_64 specific instructions, registers, and structures."
 documentation = "https://docs.rs/x86_64"
+keywords = [
+    "amd64",
+    "x86",
+    "x86_64",
+    "no_std",
+]
+categories = [
+    "no-std",
+]
+license = "MIT/Apache-2.0"
+name = "x86_64"
 readme = "README.md"
-keywords = ["amd64", "x86", "x86_64", "no_std"]
-license = "MIT"
-
-[[test]]
-name = "no_std_build"
-harness = false
+repository = "https://github.com/rust-osdev/x86_64"
+version = "0.14.8"
+edition = "2018"
 
 [dependencies]
-bit_field = "0.7.0"
+bit_field = "0.10.1"
+bitflags = "1.0.4"
+volatile = "0.4.4"
 irq_safety = { git = "https://github.com/theseus-os/irq_safety" }
-bitflags = "1.1.0"
+
+[features]
+default = [ "nightly", "instructions" ]
+instructions = []
+nightly = [ "const_fn", "step_trait", "abi_x86_interrupt", "doc_cfg" ]
+abi_x86_interrupt = []
+const_fn = []
+step_trait = []
+doc_cfg = []
+
+# These features are no longer used and only there for backwards compatibility.
+external_asm = []
+inline_asm = []
+
+[package.metadata.release]
+no-dev-version = true
+pre-release-replacements = [
+    { file="Changelog.md", search="# Unreleased", replace="# Unreleased\n\n# {{version}} – {{date}}", exactly=1 },
+]
+pre-release-commit-message = "Bump version to {{version}}"
+disable-push = true
+disable-publish = true
+disable-tag = true
