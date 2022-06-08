@@ -1,3 +1,9 @@
+# This fork has been archived
+
+This fork is no longer needed due to https://github.com/theseus-os/Theseus/pull/524.
+
+Please use the upstream x86_64 crate instead.
+
 # x86_64 library
 
 [![Crates.io](https://img.shields.io/crates/v/x86_64)](https://crates.io/crates/x86_64)
